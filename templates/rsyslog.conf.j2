@@ -1,0 +1,40 @@
+# Modules
+
+$ModLoad imuxsock # provides support for local system logging
+$ModLoad imklog   # provides kernel logging support (previously done by rklogd)
+
+{% if rsyslog_server_udp %}
+$ModLoad imudp
+$UDPServerRun {{ rsyslog_server_udp_port }}
+
+{% endif %}
+{% if rsyslog_server_tcp %}
+$ModLoad imtcp
+$InputTCPServerRun {{ rsyslog_server_tcp_port }}
+
+{% endif %}
+# Globals
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+$RepeatedMsgReduction on
+
+# Files
+$FileOwner syslog
+$FileGroup adm
+$FileCreateMode 0640
+$DirCreateMode 0755
+$Umask 0022
+
+$PrivDropToUser syslog
+$PrivDropToGroup syslog
+
+# Spool files
+$WorkDirectory /var/spool/rsyslog
+
+# Remote logging
+$template TmplAuth, "{{ rsyslog_server_folder }}/%HOSTNAME%/%PROGRAMNAME%.log"
+$template TmplMsg, "{{ rsyslog_server_folder }}/%HOSTNAME%/%PROGRAMNAME%.log"
+authpriv.*   ?TmplAuth
+*.info,mail.none,authpriv.none,cron.none   ?TmplMsg
+
+# More config files
+$IncludeConfig /etc/rsyslog.d/*.conf

@@ -1,0 +1,28 @@
+---
+- name: Ensure rsyslog is installed
+  apt: package=rsyslog state=latest
+  tags: [ install ]
+
+- name: Allow UDP connections to rsyslog
+  ufw: port={{ rsyslog_server_udp_port }} protocol=udp direction=in rule=allow
+  tags: [ firewall ]
+  when: rsyslog_server_udp
+
+- name: Allow TCP connections to rsyslog
+  ufw: port={{ rsyslog_server_tcp_port }} protocol=tcp direction=in rule=allow
+  tags: [ firewall ]
+  when: rsyslog_server_tcp
+
+- name: Configure rsyslog
+  template: dest=/etc/rsyslog.conf src=rsyslog.conf.j2
+  notify: Restart rsyslog
+  tags: [ config ]
+
+- name: Configure log types
+  template: dest=/etc/rsyslog.d/50-default.conf src=50-default.conf.j2
+  notify: Restart rsyslog
+  tags: [ config ]
+
+- name: Ensure the rsyslog folder exists
+  file: "name={{ rsyslog_server_folder }} state=directory group=syslog owner=syslog"
+  tags: [ setup ]
